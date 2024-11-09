@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1731161233488,
+      "tag": "0000_chemical_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1731167326175,
+      "tag": "0001_mature_captain_flint",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1731168402176,
+      "tag": "0002_groovy_green_goblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1731168941607,
+      "tag": "0003_narrow_crystal",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1731169217608,
+      "tag": "0004_worried_purple_man",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "tinydeskinfo_video" ADD COLUMN "duration" integer NOT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE "tinydeskinfo_video" RENAME COLUMN "dislike_count" TO "favourite_count";
