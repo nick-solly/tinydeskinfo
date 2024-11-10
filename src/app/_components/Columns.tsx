@@ -63,7 +63,7 @@ export const columns: ColumnDef<VideoRow>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: () => {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
