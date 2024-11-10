@@ -127,15 +127,11 @@ Deno.serve(async (req) => {
       commentCount: Number(video.statistics?.commentCount || 0),
       duration: durationToSeconds(video.contentDetails?.duration || "PT0S"),
     }))
-    // Remove Shorts
-    .filter((video) => video.duration > 60);
 
   console.log("Step 5 - Upsert Data")
 
   const client = postgres(connectionString, { prepare: false });
   const db = drizzle(client);
-
-  const currentVideos = await db.select({ count: count() }).from(videos);
 
   const upsertChunks = chunkArray(dataForUpsert, 1000);
 
