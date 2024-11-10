@@ -36,6 +36,13 @@
       "when": 1731169217608,
       "tag": "0004_worried_purple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1731258467711,
+      "tag": "0005_crazy_nova",
+      "breakpoints": true
     }
   ]
 }

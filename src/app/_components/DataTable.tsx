@@ -10,6 +10,7 @@ import {
   getSortedRowModel,
   type ColumnFiltersState,
   getFilteredRowModel,
+  getExpandedRowModel,
 } from "@tanstack/react-table";
 
 import {
@@ -24,12 +25,21 @@ import {
 import { Input } from "~/app/_components/ui/input";
 
 import { DataTablePagination } from "~/app/_components/DataTablePagination";
-import { useState } from "react";
+import React, { useState } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
+
+const renderWithLineBreaks = (text: string) => {
+  return text.split("\n").map((line: string, index: number) => (
+    <React.Fragment key={index}>
+      {line}
+      <br />
+    </React.Fragment>
+  ));
+};
 
 export function DataTable<TData, TValue>({
   columns,
@@ -42,9 +52,13 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: () => true,
+    paginateExpandedRows: false,
     initialState: {
       columnVisibility: {
         id: false,
+        description: false,
       },
     },
     getPaginationRowModel: getPaginationRowModel(),
@@ -93,19 +107,25 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <React.Fragment key={row.id}>
+                  <TableRow data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() && (
+                    <TableRow>
+                      <TableCell colSpan={row.getAllCells().length}>
+                        {renderWithLineBreaks(row.getValue("description"))}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>

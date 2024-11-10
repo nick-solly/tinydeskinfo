@@ -1,10 +1,10 @@
 "use client";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import { type VideoRow } from "~/lib/schemas";
+import { type VideoRow } from "~/lib/videos";
 import Link from "next/link";
 import { DataTableColumnHeader } from "~/app/_components/DataTableColumnHeader";
-import { MoreHorizontal } from "lucide-react";
+import { ChevronDown, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Button } from "~/app/_components/ui/button";
 import {
   DropdownMenu,
@@ -25,6 +25,9 @@ export const columns: ColumnDef<VideoRow>[] = [
     accessorKey: "id",
   },
   {
+    accessorKey: "description",
+  },
+  {
     accessorKey: "title",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Title" />
@@ -39,6 +42,31 @@ export const columns: ColumnDef<VideoRow>[] = [
         >
           {row.getValue("title")}
         </Link>
+      );
+    },
+  },
+  {
+    header: "Description",
+    cell: ({ row }) => {
+      return row.getCanExpand() ? (
+        <button
+          onClick={row.getToggleExpandedHandler()}
+          className="flex cursor-pointer items-center"
+        >
+          {row.getIsExpanded() ? (
+            <>
+              <ChevronDown size={16} />
+              <span>Hide</span>
+            </>
+          ) : (
+            <>
+              <ChevronRight size={16} />
+              <span>Show</span>
+            </>
+          )}
+        </button>
+      ) : (
+        ""
       );
     },
   },

@@ -21,7 +21,7 @@ export const createTable = pgTableCreator((name) => `tinydeskinfo_${name}`);
 export const videos = createTable("video", {
   id: varchar("id", { length: 11 }).primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
-  description: text("description").default(""),
+  description: text("description").notNull().default(""),
   publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
   viewCount: integer("view_count").notNull().default(0),
   likeCount: integer("like_count").notNull().default(0),
