@@ -4,14 +4,12 @@
 
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { count } from "drizzle-orm";
 import { videos } from "db/schema.ts";
 
-
-const connectionString = Deno.env.get('DATABASE_URL')!
-
+const connectionString = Deno.env.get("DATABASE_URL")!;
 
 Deno.serve(async (req) => {
   const client = postgres(connectionString, { prepare: false });
@@ -19,11 +17,9 @@ Deno.serve(async (req) => {
 
   const currentVideos = await db.select({ count: count() }).from(videos);
 
-  console.log("Current Video Count:", currentVideos)
+  console.log("Current Video Count:", currentVideos);
 
-  return new Response(
-    JSON.stringify(currentVideos),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
-
+  return new Response(JSON.stringify(currentVideos), {
+    headers: { "Content-Type": "application/json" },
+  });
+});

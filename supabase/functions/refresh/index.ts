@@ -3,87 +3,93 @@
 // This enables autocomplete, go to definition, etc.
 
 // Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import google from "@googleapis/youtube"
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import google from "@googleapis/youtube";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { sql, count } from "drizzle-orm";
 import { videos } from "db/schema.ts";
 
-
-const connectionString = Deno.env.get('DATABASE_URL')!
-
+const connectionString = Deno.env.get("DATABASE_URL")!;
 
 Deno.serve(async (req) => {
+  console.log("Step 1 - Authenticating");
 
-  console.log("Step 1 - Authenticating")
-
-  const googleApiKey = Deno.env.get('GOOGLE_API_KEY')
+  const googleApiKey = Deno.env.get("GOOGLE_API_KEY");
 
   if (!googleApiKey) {
-    return new Response(
-      JSON.stringify({ error: "Missing GOOGLE_API_KEY" }),
-      { status: 500, headers: { "Content-Type": "application/json" } })
+    return new Response(JSON.stringify({ error: "Missing GOOGLE_API_KEY" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const youtube = google.youtube({
-    version: 'v3',
+    version: "v3",
     auth: googleApiKey,
-  })
+  });
 
-  console.log("Step 2 - Get Upload Playlist")
+  console.log("Step 2 - Get Upload Playlist");
 
   const res = await youtube.channels.list({
     part: ["contentDetails"],
     forHandle: "@nprmusic",
-  })
+  });
 
-  const uploadPlaylistId = res.data.items?.[0].contentDetails?.relatedPlaylists?.uploads
+  const uploadPlaylistId =
+    res.data.items?.[0].contentDetails?.relatedPlaylists?.uploads;
 
   if (!uploadPlaylistId) {
     return new Response(
       JSON.stringify({ error: "Could not find upload playlist" }),
-      { status: 500, headers: { "Content-Type": "application/json" } })
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
   }
 
-  console.log("Step 3 - Fetch Videos")
+  console.log("Step 3 - Fetch Videos");
 
-  async function fetchVideos(uploadPlaylistId: string, nextPageToken: string | null | undefined) {
+  async function fetchVideos(
+    uploadPlaylistId: string,
+    nextPageToken: string | null | undefined,
+  ) {
     const resp = await youtube.playlistItems.list({
       part: ["snippet"],
       playlistId: uploadPlaylistId,
       maxResults: 50,
-      ...nextPageToken ? {pageToken: nextPageToken} : {},
-    })
+      ...(nextPageToken ? { pageToken: nextPageToken } : {}),
+    });
 
     return {
       items: resp.data.items,
       nextPageToken: resp.data.nextPageToken,
-    }
-
+    };
   }
 
-  const playlistItems: google.youtube_v3.Schema$PlaylistItem[] = []
-  let nextPageToken = null
-  let items
-  let i = 0
+  const playlistItems: google.youtube_v3.Schema$PlaylistItem[] = [];
+  let nextPageToken = null;
+  let items;
+  let i = 0;
 
   do {
     console.log(`       - page ${i + 1}`);
-    ({ items, nextPageToken } = await fetchVideos(uploadPlaylistId, nextPageToken))
+    ({ items, nextPageToken } = await fetchVideos(
+      uploadPlaylistId,
+      nextPageToken,
+    ));
     if (items) {
-      playlistItems.push(...items)
+      playlistItems.push(...items);
     }
-    i++
-  } while (nextPageToken)
+    i++;
+  } while (nextPageToken);
 
   if (!playlistItems) {
-    return new Response(
-      JSON.stringify({ error: "Could not find videos" }),
-      { status: 500, headers: { "Content-Type": "application/json" } })
+    return new Response(JSON.stringify({ error: "Could not find videos" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  console.log("Step 4 - Fetch Statistics")
+  console.log("Step 4 - Fetch Statistics");
 
   function chunkArray<T>(array: T[], chunkSize: number): T[][] {
     const chunks: T[][] = [];
@@ -93,18 +99,22 @@ Deno.serve(async (req) => {
     return chunks;
   }
 
-  const videoIds = playlistItems.map((video) => video.snippet?.resourceId?.videoId!)
+  const videoIds = playlistItems.map(
+    (video) => video.snippet?.resourceId?.videoId!,
+  );
   const videoIdChunks = chunkArray(videoIds, 50);
 
-  const videoStatsPromises = videoIdChunks.map(chunk =>
+  const videoStatsPromises = videoIdChunks.map((chunk) =>
     youtube.videos.list({
       part: ["statistics", "snippet", "contentDetails"],
       id: chunk,
-    })
+    }),
   );
 
   const videoStatsResponses = await Promise.all(videoStatsPromises);
-  const videoStats = videoStatsResponses.map(response => response.data.items || []).flat();
+  const videoStats = videoStatsResponses
+    .map((response) => response.data.items || [])
+    .flat();
 
   const durationToSeconds = (duration: string) => {
     const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
@@ -113,22 +123,21 @@ Deno.serve(async (req) => {
     const minutes = parseInt(match[2] || "0");
     const seconds = parseInt(match[3] || "0");
     return hours * 3600 + minutes * 60 + seconds;
-  }
+  };
 
-  const dataForUpsert = videoStats
-    .map((video) => ({
-      id: video.id!,
-      title: video.snippet?.title!,
-      description: video.snippet?.description || "",
-      publishedAt: new Date(video.snippet?.publishedAt!),
-      viewCount: Number(video.statistics?.viewCount || 0),
-      likeCount: Number(video.statistics?.likeCount || 0),
-      favoriteCount: Number(video.statistics?.favoriteCount || 0),
-      commentCount: Number(video.statistics?.commentCount || 0),
-      duration: durationToSeconds(video.contentDetails?.duration || "PT0S"),
-    }))
+  const dataForUpsert = videoStats.map((video) => ({
+    id: video.id!,
+    title: video.snippet?.title!,
+    description: video.snippet?.description || "",
+    publishedAt: new Date(video.snippet?.publishedAt!),
+    viewCount: Number(video.statistics?.viewCount || 0),
+    likeCount: Number(video.statistics?.likeCount || 0),
+    favoriteCount: Number(video.statistics?.favoriteCount || 0),
+    commentCount: Number(video.statistics?.commentCount || 0),
+    duration: durationToSeconds(video.contentDetails?.duration || "PT0S"),
+  }));
 
-  console.log("Step 5 - Upsert Data")
+  console.log("Step 5 - Upsert Data");
 
   const client = postgres(connectionString, { prepare: false });
   const db = drizzle(client);
@@ -156,11 +165,9 @@ Deno.serve(async (req) => {
       });
   }
 
-  console.log("Done")
+  console.log("Done");
 
-  return new Response(
-    "SUCCESS",
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
-
+  return new Response("SUCCESS", {
+    headers: { "Content-Type": "application/json" },
+  });
+});

@@ -1,23 +1,22 @@
-"use client"
+"use client";
 
-import { type ColumnDef } from "@tanstack/react-table"
+import { type ColumnDef } from "@tanstack/react-table";
 import { type VideoRow } from "~/lib/schemas";
 import Link from "next/link";
 import { DataTableColumnHeader } from "~/app/_components/DataTableColumnHeader";
-import { MoreHorizontal } from "lucide-react"
-import { Button } from "~/app/_components/ui/button"
+import { MoreHorizontal } from "lucide-react";
+import { Button } from "~/app/_components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "~/app/_components/ui/dropdown-menu"
-
+} from "~/app/_components/ui/dropdown-menu";
 
 function formatDate(date: Date) {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -31,9 +30,17 @@ export const columns: ColumnDef<VideoRow>[] = [
       <DataTableColumnHeader column={column} title="Title" />
     ),
     cell: ({ row }) => {
-      const videoId: string = row.getValue("id")
-      return <Link href={`https://youtube.com/watch?v=${videoId}`} target="_blank" className="font-bold">{row.getValue("title")}</Link>
-    }
+      const videoId: string = row.getValue("id");
+      return (
+        <Link
+          href={`https://youtube.com/watch?v=${videoId}`}
+          target="_blank"
+          className="font-bold"
+        >
+          {row.getValue("title")}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: "viewCount",
@@ -52,7 +59,7 @@ export const columns: ColumnDef<VideoRow>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Published" />
     ),
-    cell: ({ row }) => formatDate(row.getValue("publishedAt"))
+    cell: ({ row }) => formatDate(row.getValue("publishedAt")),
   },
   {
     id: "actions",
@@ -69,7 +76,7 @@ export const columns: ColumnDef<VideoRow>[] = [
             <DropdownMenuItem>Coming Soon...</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )
+      );
     },
   },
-]
+];
